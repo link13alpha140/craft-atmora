@@ -109,20 +109,26 @@ const recipeSearch = document.getElementById('recipe-search');
 
 recipeSearch.addEventListener('input', renderRecipes);
 
-function getFieldData(prefix) {
-    const name = document.getElementById(prefix + '-name').value.trim();
+function getFieldData(prefix, isResult = false) {
     const id = document.getElementById(prefix + '-id').value.trim();
     const qty = document.getElementById(prefix + '-qty').value;
-    if(name || id) {
-        return { name, id, qty: parseInt(qty) || 1 };
+    
+    if (isResult) {
+        if(id) return { id, qty: parseInt(qty) || 1 };
+        return null;
+    } else {
+        const name = document.getElementById(prefix + '-name').value.trim();
+        if(name || id) return { name, id, qty: parseInt(qty) || 1 };
+        return null;
     }
-    return null;
 }
 
-function setFieldData(prefix, data) {
-    document.getElementById(prefix + '-name').value = data ? data.name : '';
+function setFieldData(prefix, data, isResult = false) {
     document.getElementById(prefix + '-id').value = data ? data.id : '';
     document.getElementById(prefix + '-qty').value = data ? data.qty : '';
+    if (!isResult) {
+        document.getElementById(prefix + '-name').value = data ? data.name : '';
+    }
 }
 
 recipeForm.addEventListener('submit', (e) => {
@@ -131,13 +137,13 @@ recipeForm.addEventListener('submit', (e) => {
     const name = document.getElementById('recipe-name').value.trim();
     const category = document.getElementById('recipe-category').value;
     
-    const ing1 = getFieldData('ing1');
-    const ing2 = getFieldData('ing2');
-    const ing3 = getFieldData('ing3');
+    const ing1 = getFieldData('ing1', false);
+    const ing2 = getFieldData('ing2', false);
+    const ing3 = getFieldData('ing3', false);
     
-    const resMed = getFieldData('res-med');
-    const resNorm = getFieldData('res-norm');
-    const resSup = getFieldData('res-sup');
+    const resMed = getFieldData('res-med', true);
+    const resNorm = getFieldData('res-norm', true);
+    const resSup = getFieldData('res-sup', true);
 
     if(!ing1) {
         alert("L'ingrédient 1 est requis.");
@@ -192,12 +198,9 @@ function renderRecipes() {
     const doublonTxt = document.getElementById('doublon-search').value.toLowerCase().trim();
     
     recipes.forEach(recipe => {
-        // Text Filter
         if(filterTxt && !recipe.name.toLowerCase().includes(filterTxt)) return;
-        // Category Filter
         if(filterCat && recipe.category !== filterCat) return;
         
-        // Doublon Filter (Check if doublonTxt matches any Result ID)
         if(isDoublonMode && doublonTxt) {
             let matchDoublon = false;
             const res = recipe.results;
@@ -210,16 +213,14 @@ function renderRecipes() {
         const tr = document.createElement('tr');
         tr.className = "border-b border-[#313244] hover:bg-[#313244]/30 transition-colors";
         
-        // Legacy support mapping
         const ings = recipe.ingredients || [];
         const ingString = ings.map(i => `<div class="mb-1">${i.qty}x ${escapeHtml(i.name)} <span class="text-[10px] text-gray-600">${escapeHtml(i.id||'')}</span></div>`).join('');
         
-        // Results string
         let resString = '';
         if(recipe.results) {
-            if(recipe.results.med) resString += `<div class="text-gray-500 mb-1"><span class="w-1.5 h-1.5 inline-block rounded-full bg-gray-500 mr-1"></span>${recipe.results.med.qty}x ${escapeHtml(recipe.results.med.name)}</div>`;
-            if(recipe.results.norm) resString += `<div class="text-blue-400 mb-1"><span class="w-1.5 h-1.5 inline-block rounded-full bg-blue-500 mr-1"></span>${recipe.results.norm.qty}x ${escapeHtml(recipe.results.norm.name)}</div>`;
-            if(recipe.results.sup) resString += `<div class="text-yellow-500 mb-1"><span class="w-1.5 h-1.5 inline-block rounded-full bg-yellow-500 mr-1"></span>${recipe.results.sup.qty}x ${escapeHtml(recipe.results.sup.name)}</div>`;
+            if(recipe.results.med) resString += `<div class="text-gray-500 mb-1"><span class="w-1.5 h-1.5 inline-block rounded-full bg-gray-500 mr-1"></span>${recipe.results.med.qty}x <span class="font-mono text-blue-300 text-[10px]">${escapeHtml(recipe.results.med.id)}</span></div>`;
+            if(recipe.results.norm) resString += `<div class="text-blue-400 mb-1"><span class="w-1.5 h-1.5 inline-block rounded-full bg-blue-500 mr-1"></span>${recipe.results.norm.qty}x <span class="font-mono text-blue-300 text-[10px]">${escapeHtml(recipe.results.norm.id)}</span></div>`;
+            if(recipe.results.sup) resString += `<div class="text-yellow-500 mb-1"><span class="w-1.5 h-1.5 inline-block rounded-full bg-yellow-500 mr-1"></span>${recipe.results.sup.qty}x <span class="font-mono text-blue-300 text-[10px]">${escapeHtml(recipe.results.sup.id)}</span></div>`;
         } else {
             resString = "<i class='text-xs text-red-500'>Ancien format</i>";
         }
@@ -270,19 +271,18 @@ function editRecipe(id) {
     document.getElementById('recipe-name').value = recipe.name;
     document.getElementById('recipe-category').value = recipe.category;
     
-    // Legacy support clear
-    setFieldData('ing1', null); setFieldData('ing2', null); setFieldData('ing3', null);
-    setFieldData('res-med', null); setFieldData('res-norm', null); setFieldData('res-sup', null);
+    setFieldData('ing1', null, false); setFieldData('ing2', null, false); setFieldData('ing3', null, false);
+    setFieldData('res-med', null, true); setFieldData('res-norm', null, true); setFieldData('res-sup', null, true);
     
     if(recipe.ingredients) {
-        if(recipe.ingredients[0]) setFieldData('ing1', recipe.ingredients[0]);
-        if(recipe.ingredients[1]) setFieldData('ing2', recipe.ingredients[1]);
-        if(recipe.ingredients[2]) setFieldData('ing3', recipe.ingredients[2]);
+        if(recipe.ingredients[0]) setFieldData('ing1', recipe.ingredients[0], false);
+        if(recipe.ingredients[1]) setFieldData('ing2', recipe.ingredients[1], false);
+        if(recipe.ingredients[2]) setFieldData('ing3', recipe.ingredients[2], false);
     }
     if(recipe.results) {
-        setFieldData('res-med', recipe.results.med);
-        setFieldData('res-norm', recipe.results.norm);
-        setFieldData('res-sup', recipe.results.sup);
+        setFieldData('res-med', recipe.results.med, true);
+        setFieldData('res-norm', recipe.results.norm, true);
+        setFieldData('res-sup', recipe.results.sup, true);
     }
 }
 
@@ -293,9 +293,8 @@ function saveRecipes() {
 
 // --- AUTOCOMPLETE LOGIC ---
 function setupAutocomplete() {
-    const inputs = document.querySelectorAll('.autocomplete-input');
+    const inputs = document.querySelectorAll('.autocomplete-input, .autocomplete-result-input');
     
-    // Create shared dropdown element
     const dropdown = document.createElement('ul');
     dropdown.id = 'autocomplete-dropdown';
     dropdown.className = 'autocomplete-dropdown hidden';
@@ -314,6 +313,7 @@ function setupAutocomplete() {
             }
             
             activeInput = this;
+            const isResult = this.classList.contains('autocomplete-result-input');
             const rect = this.getBoundingClientRect();
             dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
             dropdown.style.left = (rect.left + window.scrollX) + 'px';
@@ -332,19 +332,20 @@ function setupAutocomplete() {
                     li.innerHTML = `<div class="font-bold text-white">${escapeHtml(item.name || item.FULL)}</div><div class="text-blue-400">${escapeHtml(formid)} <span class="text-gray-600">- ${escapeHtml(item.editorId || '')}</span></div>`;
                     
                     li.addEventListener('click', () => {
-                        activeInput.value = item.name || item.FULL;
-                        // Find the sibling ID input based on activeInput ID
-                        // Format: ing1-name -> ing1-id
-                        const prefix = activeInput.id.replace('-name', '');
-                        const idInput = document.getElementById(prefix + '-id');
-                        if(idInput) idInput.value = formid;
-                        
+                        if (isResult) {
+                            activeInput.value = formid; // Inject ID directly in the sole input
+                        } else {
+                            activeInput.value = item.name || item.FULL;
+                            const prefix = activeInput.id.replace('-name', '');
+                            const idInput = document.getElementById(prefix + '-id');
+                            if(idInput) idInput.value = formid;
+                        }
                         dropdown.classList.add('hidden');
                     });
                     
                     dropdown.appendChild(li);
                     count++;
-                    if(count >= 15) break; // limit suggestions
+                    if(count >= 15) break; 
                 }
             }
             if(count === 0) {
@@ -355,7 +356,6 @@ function setupAutocomplete() {
             }
         });
         
-        // Hide on blur, timeout to allow click on item
         input.addEventListener('blur', () => {
             setTimeout(() => { dropdown.classList.add('hidden'); }, 200);
         });

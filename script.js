@@ -221,7 +221,7 @@ function renderRecipes() {
             if(recipe.results.norm) resString += `<div class="text-blue-400 mb-1"><span class="w-1.5 h-1.5 inline-block rounded-full bg-blue-500 mr-1"></span>${recipe.results.norm.qty}x ${escapeHtml(recipe.results.norm.name)}</div>`;
             if(recipe.results.sup) resString += `<div class="text-yellow-500 mb-1"><span class="w-1.5 h-1.5 inline-block rounded-full bg-yellow-500 mr-1"></span>${recipe.results.sup.qty}x ${escapeHtml(recipe.results.sup.name)}</div>`;
         } else {
-            resString = "<i class="text-xs text-red-500">Ancien format</i>";
+            resString = "<i class='text-xs text-red-500'>Ancien format</i>";
         }
 
         tr.innerHTML = `

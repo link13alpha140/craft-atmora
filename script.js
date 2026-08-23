@@ -1,18 +1,15 @@
 // --- STATE MANAGEMENT ---
 let categories = JSON.parse(localStorage.getItem('atmora_categories')) || ["Arme 1H", "Arme 2H", "Armure Lourde", "Armure Légère", "Alchimie"];
 let recipes = JSON.parse(localStorage.getItem('atmora_recipes')) || [];
-let dbItems = []; // Not saved to localStorage to avoid quota limits
+let dbItems = []; 
+let isDoublonMode = false;
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     renderCategories();
-    renderRecipes();
     updateCategorySelect();
-    
-    // Add default ingredient row if empty
-    if(document.getElementById('ingredients-container').children.length === 0) {
-        addIngredientRow();
-    }
+    renderRecipes();
+    setupAutocomplete();
 });
 
 // --- NAVIGATION ---
@@ -38,13 +35,10 @@ function showTab(tabId) {
         event.currentTarget.classList.add('bg-[#313244]', 'text-white');
     }
 
-    // specific resets
     if (tabId === 'tab-create-recipe') {
         document.getElementById('recipe-form').reset();
         document.getElementById('recipe-id').value = '';
         document.getElementById('recipe-form-title').innerText = "Créer une Recette";
-        document.getElementById('ingredients-container').innerHTML = '';
-        addIngredientRow();
     }
 }
 
@@ -52,6 +46,7 @@ function showTab(tabId) {
 const categoryForm = document.getElementById('category-form');
 const categoryList = document.getElementById('category-list');
 const recipeCategorySelect = document.getElementById('recipe-category');
+const filterCategorySelect = document.getElementById('filter-category');
 
 categoryForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -90,11 +85,17 @@ function deleteCategory(index) {
 
 function updateCategorySelect() {
     recipeCategorySelect.innerHTML = '';
+    filterCategorySelect.innerHTML = '<option value="">Toutes catégories</option>';
     categories.forEach(cat => {
         const opt = document.createElement('option');
         opt.value = cat;
         opt.innerText = cat;
         recipeCategorySelect.appendChild(opt);
+        
+        const opt2 = document.createElement('option');
+        opt2.value = cat;
+        opt2.innerText = cat;
+        filterCategorySelect.appendChild(opt2);
     });
 }
 
@@ -109,55 +110,59 @@ const recipeSearch = document.getElementById('recipe-search');
 
 recipeSearch.addEventListener('input', renderRecipes);
 
-function addIngredientRow(name = '', qty = 1) {
-    const container = document.getElementById('ingredients-container');
-    const div = document.createElement('div');
-    div.className = "flex space-x-4 items-center bg-[#11111a] p-3 rounded-lg border border-[#313244] ingredient-row";
-    div.innerHTML = `
-        <div class="flex-1">
-            <label class="block mb-1 text-xs text-gray-500">Objet (Nom ou ID)</label>
-            <input type="text" required value="${escapeHtml(name)}" class="ing-name bg-[#181825] border border-[#313244] text-white text-sm rounded block w-full p-2 outline-none">
-        </div>
-        <div class="w-24">
-            <label class="block mb-1 text-xs text-gray-500">Quantité</label>
-            <input type="number" required value="${qty}" min="1" class="ing-qty bg-[#181825] border border-[#313244] text-white text-sm rounded block w-full p-2 outline-none">
-        </div>
-        <div class="pt-5">
-            <button type="button" onclick="this.parentElement.parentElement.remove()" class="text-red-500 hover:text-red-400 p-2"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-    `;
-    container.appendChild(div);
+function getFieldData(prefix) {
+    const name = document.getElementById(prefix + '-name').value.trim();
+    const id = document.getElementById(prefix + '-id').value.trim();
+    const qty = document.getElementById(prefix + '-qty').value;
+    if(name || id) {
+        return { name, id, qty: parseInt(qty) || 1 };
+    }
+    return null;
+}
+
+function setFieldData(prefix, data) {
+    document.getElementById(prefix + '-name').value = data ? data.name : '';
+    document.getElementById(prefix + '-id').value = data ? data.id : '';
+    document.getElementById(prefix + '-qty').value = data ? data.qty : '';
 }
 
 recipeForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const id = document.getElementById('recipe-id').value;
+    const recipeId = document.getElementById('recipe-id').value;
     const name = document.getElementById('recipe-name').value.trim();
     const category = document.getElementById('recipe-category').value;
     
-    const ingredients = [];
-    document.querySelectorAll('.ingredient-row').forEach(row => {
-        const ingName = row.querySelector('.ing-name').value.trim();
-        const ingQty = parseInt(row.querySelector('.ing-qty').value);
-        if(ingName && ingQty) {
-            ingredients.push({ name: ingName, qty: ingQty });
-        }
-    });
+    const ing1 = getFieldData('ing1');
+    const ing2 = getFieldData('ing2');
+    const ing3 = getFieldData('ing3');
+    
+    const resMed = getFieldData('res-med');
+    const resNorm = getFieldData('res-norm');
+    const resSup = getFieldData('res-sup');
 
-    if(ingredients.length === 0) {
-        alert("Ajoutez au moins un ingrédient.");
+    if(!ing1) {
+        alert("L'ingrédient 1 est requis.");
+        return;
+    }
+    if(!resMed && !resNorm && !resSup) {
+        alert("Au moins un résultat (Médiocre, Normal ou Supérieur) est requis.");
         return;
     }
 
     const recipe = {
-        id: id ? id : Date.now().toString(),
+        id: recipeId ? recipeId : Date.now().toString(),
         name,
         category,
-        ingredients
+        ingredients: [ing1, ing2, ing3].filter(i => i !== null),
+        results: {
+            med: resMed,
+            norm: resNorm,
+            sup: resSup
+        }
     };
 
-    if(id) {
-        const index = recipes.findIndex(r => r.id === id);
+    if(recipeId) {
+        const index = recipes.findIndex(r => r.id === recipeId);
         if(index > -1) recipes[index] = recipe;
     } else {
         recipes.push(recipe);
@@ -168,28 +173,71 @@ recipeForm.addEventListener('submit', (e) => {
     showTab('tab-recipes');
 });
 
+function toggleDoublonSearch() {
+    isDoublonMode = !isDoublonMode;
+    const container = document.getElementById('doublon-container');
+    if(isDoublonMode) {
+        container.classList.remove('hidden');
+        document.getElementById('doublon-search').focus();
+    } else {
+        container.classList.add('hidden');
+        document.getElementById('doublon-search').value = '';
+    }
+    renderRecipes();
+}
+
 function renderRecipes() {
     recipeTableBody.innerHTML = '';
-    const filter = recipeSearch.value.toLowerCase();
+    const filterTxt = recipeSearch.value.toLowerCase();
+    const filterCat = filterCategorySelect.value;
+    const doublonTxt = document.getElementById('doublon-search').value.toLowerCase().trim();
     
     recipes.forEach(recipe => {
-        if(filter && !recipe.name.toLowerCase().includes(filter) && !recipe.category.toLowerCase().includes(filter)) return;
+        // Text Filter
+        if(filterTxt && !recipe.name.toLowerCase().includes(filterTxt)) return;
+        // Category Filter
+        if(filterCat && recipe.category !== filterCat) return;
+        
+        // Doublon Filter (Check if doublonTxt matches any Result ID)
+        if(isDoublonMode && doublonTxt) {
+            let matchDoublon = false;
+            const res = recipe.results;
+            if(res.med && res.med.id.toLowerCase().includes(doublonTxt)) matchDoublon = true;
+            if(res.norm && res.norm.id.toLowerCase().includes(doublonTxt)) matchDoublon = true;
+            if(res.sup && res.sup.id.toLowerCase().includes(doublonTxt)) matchDoublon = true;
+            if(!matchDoublon) return;
+        }
 
         const tr = document.createElement('tr');
         tr.className = "border-b border-[#313244] hover:bg-[#313244]/30 transition-colors";
         
-        const ingString = recipe.ingredients.map(i => `${i.qty}x ${i.name}`).join(', ');
+        // Legacy support mapping
+        const ings = recipe.ingredients || [];
+        const ingString = ings.map(i => `<div class="mb-1">${i.qty}x ${escapeHtml(i.name)} <span class="text-[10px] text-gray-600">${escapeHtml(i.id||'')}</span></div>`).join('');
         
+        // Results string
+        let resString = '';
+        if(recipe.results) {
+            if(recipe.results.med) resString += `<div class="text-gray-500 mb-1"><span class="w-1.5 h-1.5 inline-block rounded-full bg-gray-500 mr-1"></span>${recipe.results.med.qty}x ${escapeHtml(recipe.results.med.name)}</div>`;
+            if(recipe.results.norm) resString += `<div class="text-blue-400 mb-1"><span class="w-1.5 h-1.5 inline-block rounded-full bg-blue-500 mr-1"></span>${recipe.results.norm.qty}x ${escapeHtml(recipe.results.norm.name)}</div>`;
+            if(recipe.results.sup) resString += `<div class="text-yellow-500 mb-1"><span class="w-1.5 h-1.5 inline-block rounded-full bg-yellow-500 mr-1"></span>${recipe.results.sup.qty}x ${escapeHtml(recipe.results.sup.name)}</div>`;
+        } else {
+            resString = "<i class="text-xs text-red-500">Ancien format</i>";
+        }
+
         tr.innerHTML = `
-            <td class="px-6 py-4 font-medium text-white flex items-center">
-                <div class="w-8 h-8 rounded bg-gray-800 flex items-center justify-center mr-3 border border-gray-700 text-gray-400"><i class="fa-solid fa-khanda"></i></div>
-                ${escapeHtml(recipe.name)}
+            <td class="px-6 py-4 font-medium text-white">
+                <div class="text-base">${escapeHtml(recipe.name)}</div>
+                <div class="text-[10px] text-gray-600">ID: ${recipe.id}</div>
             </td>
             <td class="px-6 py-4">
                 <span class="bg-gray-800 text-gray-300 border border-gray-600 text-xs font-medium px-2.5 py-1 rounded">${escapeHtml(recipe.category)}</span>
             </td>
             <td class="px-6 py-4 text-gray-400 text-xs">
-                ${escapeHtml(ingString)}
+                ${ingString}
+            </td>
+            <td class="px-6 py-4 text-xs font-medium">
+                ${resString}
             </td>
             <td class="px-6 py-4 text-right space-x-2">
                 <button onclick="editRecipe('${recipe.id}')" class="text-blue-400 hover:text-blue-300 p-1"><i class="fa-solid fa-pen"></i></button>
@@ -218,14 +266,96 @@ function editRecipe(id) {
     document.getElementById('recipe-name').value = recipe.name;
     document.getElementById('recipe-category').value = recipe.category;
     
-    document.getElementById('ingredients-container').innerHTML = '';
-    recipe.ingredients.forEach(ing => {
-        addIngredientRow(ing.name, ing.qty);
-    });
+    // Legacy support clear
+    setFieldData('ing1', null); setFieldData('ing2', null); setFieldData('ing3', null);
+    setFieldData('res-med', null); setFieldData('res-norm', null); setFieldData('res-sup', null);
+    
+    if(recipe.ingredients) {
+        if(recipe.ingredients[0]) setFieldData('ing1', recipe.ingredients[0]);
+        if(recipe.ingredients[1]) setFieldData('ing2', recipe.ingredients[1]);
+        if(recipe.ingredients[2]) setFieldData('ing3', recipe.ingredients[2]);
+    }
+    if(recipe.results) {
+        setFieldData('res-med', recipe.results.med);
+        setFieldData('res-norm', recipe.results.norm);
+        setFieldData('res-sup', recipe.results.sup);
+    }
 }
 
 function saveRecipes() {
     localStorage.setItem('atmora_recipes', JSON.stringify(recipes));
+}
+
+
+// --- AUTOCOMPLETE LOGIC ---
+function setupAutocomplete() {
+    const inputs = document.querySelectorAll('.autocomplete-input');
+    
+    // Create shared dropdown element
+    const dropdown = document.createElement('ul');
+    dropdown.id = 'autocomplete-dropdown';
+    dropdown.className = 'autocomplete-dropdown hidden';
+    document.body.appendChild(dropdown);
+    
+    let activeInput = null;
+
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const val = this.value.toLowerCase().trim();
+            dropdown.innerHTML = '';
+            
+            if(!val || dbItems.length === 0) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+            
+            activeInput = this;
+            const rect = this.getBoundingClientRect();
+            dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+            dropdown.style.left = (rect.left + window.scrollX) + 'px';
+            dropdown.style.width = rect.width + 'px';
+            dropdown.classList.remove('hidden');
+            
+            let count = 0;
+            for(let i = 0; i < dbItems.length; i++) {
+                const item = dbItems[i];
+                const itemName = (item.name || item.Name || item.FULL || "").toLowerCase();
+                const formid = item.formId || item.FormID || item.id || "";
+                
+                if(itemName.includes(val) || formid.toLowerCase().includes(val)) {
+                    const li = document.createElement('li');
+                    li.className = 'autocomplete-item text-gray-300';
+                    li.innerHTML = `<div class="font-bold text-white">${escapeHtml(item.name || item.FULL)}</div><div class="text-blue-400">${escapeHtml(formid)} <span class="text-gray-600">- ${escapeHtml(item.editorId || '')}</span></div>`;
+                    
+                    li.addEventListener('click', () => {
+                        activeInput.value = item.name || item.FULL;
+                        // Find the sibling ID input based on activeInput ID
+                        // Format: ing1-name -> ing1-id
+                        const prefix = activeInput.id.replace('-name', '');
+                        const idInput = document.getElementById(prefix + '-id');
+                        if(idInput) idInput.value = formid;
+                        
+                        dropdown.classList.add('hidden');
+                    });
+                    
+                    dropdown.appendChild(li);
+                    count++;
+                    if(count >= 15) break; // limit suggestions
+                }
+            }
+            if(count === 0) {
+                const li = document.createElement('li');
+                li.className = 'autocomplete-item text-gray-500 text-center italic';
+                li.innerText = 'Aucun résultat';
+                dropdown.appendChild(li);
+            }
+        });
+        
+        // Hide on blur, timeout to allow click on item
+        input.addEventListener('blur', () => {
+            setTimeout(() => { dropdown.classList.add('hidden'); }, 200);
+        });
+    });
 }
 
 
@@ -235,6 +365,7 @@ const jsonFilename = document.getElementById('json-filename');
 const jsonStatusDot = document.getElementById('json-status-dot');
 const dbSearch = document.getElementById('db-search');
 const dbResults = document.getElementById('db-results');
+const dbSummary = document.getElementById('db-summary');
 
 jsonUpload.addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -253,7 +384,6 @@ jsonUpload.addEventListener('change', (e) => {
             console.error(err);
         }
     };
-    // xEdit exporte par défaut en ANSI (Windows-1252), ce qui casse les accents si on lit en UTF-8
     reader.readAsText(file, 'windows-1252');
 });
 
@@ -261,6 +391,8 @@ dbSearch.addEventListener('input', renderDbResults);
 
 function renderDbResults() {
     const filter = dbSearch.value.toLowerCase().trim();
+    dbSummary.classList.add('hidden');
+    
     if(dbItems.length === 0) return;
     
     dbResults.innerHTML = '';
@@ -270,48 +402,48 @@ function renderDbResults() {
         return;
     }
 
-    const maxResults = 300; // Augmenté de 50 à 300 pour plus de confort
+    const maxResults = 300;
     let count = 0;
     
     for(let i = 0; i < dbItems.length; i++) {
         const item = dbItems[i];
-        // Ensure object has properties you want to search
         const str = JSON.stringify(item).toLowerCase();
         
         if(str.includes(filter)) {
-            const div = document.createElement('div');
-            div.className = "font-mono text-xs bg-[#11111a] p-3 rounded border border-gray-800 text-gray-400 mb-2 overflow-hidden";
-            
-            // Format item nicely instead of raw JSON
             const name = item.name || item.Name || item.FULL || "Inconnu";
             const formid = item.formId || item.FormID || item.id || "N/A";
             const plugin = item.plugin || item.File || "N/A";
             const editorId = item.editorId || item.EditorID || "";
             
-            div.innerHTML = `
-                <div class="flex justify-between mb-1">
-                    <strong class="text-white text-sm">${escapeHtml(name)}</strong>
-                    <span class="text-blue-400">${escapeHtml(formid)}</span>
-                </div>
-                <div class="text-gray-500 flex justify-between">
-                    <span>Fichier: <span class="text-green-400">${escapeHtml(plugin)}</span></span>
-                    <span class="text-gray-600 text-xs">${escapeHtml(editorId)}</span>
-                </div>
-            `;
-            dbResults.appendChild(div);
-            count++;
-            if(count >= maxResults) {
-                const limit = document.createElement('div');
-                limit.className = "text-center text-xs text-yellow-500 mt-2";
-                limit.innerText = `... et plus. Affinez la recherche (Max ${maxResults} résultats affichés).`;
-                dbResults.appendChild(limit);
-                break;
+            if (count < maxResults) {
+                const div = document.createElement('div');
+                div.className = "font-mono text-xs bg-[#11111a] p-3 rounded border border-gray-800 text-gray-400 mb-2 overflow-hidden";
+                div.innerHTML = `
+                    <div class="flex justify-between mb-1">
+                        <strong class="text-white text-sm">${escapeHtml(name)}</strong>
+                        <span class="text-blue-400">${escapeHtml(formid)}</span>
+                    </div>
+                    <div class="text-gray-500 flex justify-between">
+                        <span>Fichier: <span class="text-green-400">${escapeHtml(plugin)}</span></span>
+                        <span class="text-gray-600 text-xs">${escapeHtml(editorId)}</span>
+                    </div>
+                `;
+                dbResults.appendChild(div);
             }
+            count++;
         }
     }
     
+    dbSummary.classList.remove('hidden');
+    dbSummary.innerHTML = `<i class="fa-solid fa-list mr-1"></i> ${count} résultat(s) trouvé(s) pour "${escapeHtml(filter)}"`;
+    
     if(count === 0) {
         dbResults.innerHTML = '<div class="text-center text-gray-500 mt-10">Aucun résultat trouvé.</div>';
+    } else if(count > maxResults) {
+        const limit = document.createElement('div');
+        limit.className = "text-center text-xs text-yellow-500 mt-4";
+        limit.innerText = `... et ${count - maxResults} autres résultats masqués. Affinez la recherche.`;
+        dbResults.appendChild(limit);
     }
 }
 
@@ -326,10 +458,7 @@ function escapeHtml(unsafe) {
 }
 
 function exportData() {
-    const data = {
-        categories: categories,
-        recipes: recipes
-    };
+    const data = { categories, recipes };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

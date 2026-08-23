@@ -7,10 +7,32 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .autocomplete-dropdown {
+            position: absolute;
+            z-index: 50;
+            background: #11111a;
+            border: 1px solid #313244;
+            border-top: none;
+            max-height: 150px;
+            overflow-y: auto;
+            width: 100%;
+            border-radius: 0 0 0.5rem 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+        .autocomplete-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #181825;
+            font-size: 0.75rem;
+        }
+        .autocomplete-item:hover {
+            background-color: #313244;
+        }
+    </style>
 </head>
 <body class="bg-[#11111a] text-gray-300 font-sans h-screen flex overflow-hidden selection:bg-red-900 selection:text-white">
 
-    <!-- Sidebar -->
     <aside class="w-64 bg-[#181825] border-r border-[#313244] flex flex-col h-full shadow-xl z-20 shrink-0">
         <div class="h-20 flex items-center px-6 border-b border-[#313244]">
             <div class="w-10 h-10 bg-[#313244] rounded flex items-center justify-center mr-4 text-red-500 border border-red-900 shadow-[0_0_10px_rgba(220,38,38,0.2)]">
@@ -52,19 +74,15 @@
                 </nav>
             </div>
         </div>
-        
         <div class="p-4 border-t border-[#313244] text-center text-xs text-gray-600">
-            Atmora Roleplay v1.0<br>
-            Console d'administration
+            Atmora Roleplay v1.0<br>Console d'administration
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col h-full bg-[#1e1e2e] overflow-hidden relative">
         <header class="h-16 bg-[#181825] border-b border-[#313244] flex items-center px-6 shrink-0 z-10 shadow-sm">
             <div class="ml-auto flex items-center space-x-4">
-                <button class="w-8 h-8 rounded bg-[#313244] text-gray-400 hover:text-white flex items-center justify-center transition-colors">
-                    <i class="fa-solid fa-gear"></i>
-                </button>
+                <button onclick="localStorage.removeItem('atmora_recipes'); location.reload();" class="text-xs text-gray-600 hover:text-red-500 mr-4">Wipe Cache</button>
                 <button onclick="exportData()" class="text-sm bg-blue-900/50 hover:bg-blue-800 text-blue-300 px-3 py-1.5 rounded transition-colors border border-blue-800 flex items-center">
                     <i class="fa-solid fa-download mr-2"></i> Exporter
                 </button>
@@ -82,16 +100,29 @@
                 <div class="flex justify-between items-end mb-6">
                     <div>
                         <h2 class="text-2xl font-bold text-white mb-1">Navigateur de Recettes</h2>
-                        <p class="text-gray-400 text-sm">Consultez et modifiez les recettes existantes.</p>
+                        <p class="text-gray-400 text-sm">Gérez toutes vos recettes.</p>
                     </div>
-                    <div class="flex space-x-3">
-                        <div class="relative">
-                            <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm"></i>
-                            <input type="text" id="recipe-search" placeholder="Chercher une recette..." class="bg-[#181825] border border-[#313244] text-gray-300 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-64 pl-10 p-2.5 outline-none transition-colors">
+                    <div class="flex flex-col items-end space-y-2">
+                        <div class="flex space-x-3">
+                            <select id="filter-category" onchange="renderRecipes()" class="bg-[#181825] border border-[#313244] text-gray-300 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 outline-none p-2.5">
+                                <option value="">Toutes catégories</option>
+                            </select>
+                            <div class="relative">
+                                <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm"></i>
+                                <input type="text" id="recipe-search" placeholder="Chercher une recette..." class="bg-[#181825] border border-[#313244] text-gray-300 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-64 pl-10 p-2.5 outline-none transition-colors">
+                            </div>
+                            <button onclick="toggleDoublonSearch()" class="bg-purple-900/40 hover:bg-purple-800 text-purple-300 border border-purple-800 text-sm font-medium rounded-lg px-4 py-2.5 transition-colors">
+                                <i class="fa-solid fa-clone mr-1"></i> DOUBLON
+                            </button>
+                            <button class="bg-red-700 hover:bg-red-800 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition-colors" onclick="showTab('tab-create-recipe')">
+                                Nouvelle
+                            </button>
                         </div>
-                        <button class="bg-red-700 hover:bg-red-800 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition-colors" onclick="showTab('tab-create-recipe')">
-                            Nouvelle Recette
-                        </button>
+                        <!-- Doublon Search Bar (Hidden by default) -->
+                        <div id="doublon-container" class="hidden flex items-center space-x-2 bg-purple-900/20 p-2 rounded border border-purple-800/50 w-full justify-end">
+                            <span class="text-xs text-purple-300 font-medium">Recherche par ID Résultat :</span>
+                            <input type="text" id="doublon-search" oninput="renderRecipes()" placeholder="Ex: 00012EB7" class="bg-[#11111a] border border-[#313244] text-gray-300 text-sm rounded px-3 py-1.5 outline-none w-48">
+                        </div>
                     </div>
                 </div>
                 
@@ -99,24 +130,25 @@
                     <table class="w-full text-sm text-left text-gray-400">
                         <thead class="text-xs text-gray-400 uppercase bg-[#313244]/50 border-b border-[#313244]">
                             <tr>
-                                <th scope="col" class="px-6 py-4 font-semibold tracking-wider">Objet</th>
+                                <th scope="col" class="px-6 py-4 font-semibold tracking-wider">Recette (Nom)</th>
                                 <th scope="col" class="px-6 py-4 font-semibold tracking-wider">Catégorie</th>
                                 <th scope="col" class="px-6 py-4 font-semibold tracking-wider">Ingrédients</th>
+                                <th scope="col" class="px-6 py-4 font-semibold tracking-wider">Résultats</th>
                                 <th scope="col" class="px-6 py-4 font-semibold tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="recipe-table-body">
-                            <!-- Injected by JS -->
+                            <!-- JS Injected -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
             <!-- 2. Créer une recette -->
-            <div id="tab-create-recipe" class="tab-content hidden max-w-4xl">
+            <div id="tab-create-recipe" class="tab-content hidden max-w-5xl">
                 <div class="mb-6">
                     <h2 class="text-2xl font-bold text-white mb-1" id="recipe-form-title">Créer une Recette</h2>
-                    <p class="text-gray-400 text-sm">Définissez un nouvel objet craftable et ses composants.</p>
+                    <p class="text-gray-400 text-sm text-yellow-500/80"><i class="fa-solid fa-circle-info mr-1"></i> Astuce : Tape un nom dans les cases "Nom affichage" pour chercher automatiquement l'ID (nécessite le JSON chargé).</p>
                 </div>
                 
                 <div class="bg-[#181825] border border-[#313244] rounded-lg p-6 shadow-lg">
@@ -124,31 +156,122 @@
                         <input type="hidden" id="recipe-id">
                         <div class="grid grid-cols-2 gap-6 mb-6">
                             <div>
-                                <label class="block mb-2 text-sm font-medium text-gray-300">Nom de l'objet final (ID ou Nom)</label>
-                                <input type="text" id="recipe-name" required class="bg-[#11111a] border border-[#313244] text-white text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 outline-none" placeholder="Ex: Épée de Fer">
+                                <label class="block mb-2 text-sm font-medium text-gray-300">Nom de la Recette</label>
+                                <input type="text" id="recipe-name" required class="bg-[#11111a] border border-[#313244] text-white text-sm rounded-lg block w-full p-2.5 outline-none" placeholder="Ex: Forgeage de l'Épée en Fer">
                             </div>
                             <div>
                                 <label class="block mb-2 text-sm font-medium text-gray-300">Catégorie</label>
-                                <select id="recipe-category" class="bg-[#11111a] border border-[#313244] text-white text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 outline-none">
-                                    <!-- Injected by JS -->
-                                </select>
+                                <select id="recipe-category" class="bg-[#11111a] border border-[#313244] text-white text-sm rounded-lg block w-full p-2.5 outline-none"></select>
                             </div>
                         </div>
                         
-                        <hr class="border-[#313244] my-6">
-                        
-                        <div class="mb-4 flex justify-between items-center">
-                            <h3 class="text-lg font-medium text-white">Ingrédients requis</h3>
-                            <button type="button" onclick="addIngredientRow()" class="text-xs bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded border border-gray-600 transition-colors">
-                                <i class="fa-solid fa-plus mr-1"></i> Ajouter un ingrédient
-                            </button>
+                        <div class="grid grid-cols-2 gap-8">
+                            <!-- INGREDIENTS -->
+                            <div>
+                                <h3 class="text-lg font-medium text-white mb-4 border-b border-[#313244] pb-2">Ingrédients</h3>
+                                <div class="space-y-4">
+                                    <!-- Ing 1 -->
+                                    <div class="bg-[#11111a] p-3 rounded-lg border border-[#313244]">
+                                        <div class="text-xs text-gray-500 mb-2 font-bold uppercase tracking-wide">Ingrédient 1 (Requis)</div>
+                                        <div class="flex space-x-2">
+                                            <div class="flex-1 relative">
+                                                <input type="text" id="ing1-name" required class="autocomplete-input bg-[#181825] border border-[#313244] text-white text-xs rounded block w-full p-2 outline-none" placeholder="Nom affichage...">
+                                            </div>
+                                            <div class="w-24">
+                                                <input type="text" id="ing1-id" required class="bg-[#181825] border border-red-900/50 text-blue-300 text-xs rounded block w-full p-2 outline-none font-mono" placeholder="FormID">
+                                            </div>
+                                            <div class="w-16">
+                                                <input type="number" id="ing1-qty" value="1" min="1" required class="bg-[#181825] border border-[#313244] text-white text-xs rounded block w-full p-2 outline-none" placeholder="Qté">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Ing 2 -->
+                                    <div class="bg-[#11111a] p-3 rounded-lg border border-[#313244]">
+                                        <div class="text-xs text-gray-500 mb-2 font-bold uppercase tracking-wide">Ingrédient 2 (Facultatif)</div>
+                                        <div class="flex space-x-2">
+                                            <div class="flex-1 relative">
+                                                <input type="text" id="ing2-name" class="autocomplete-input bg-[#181825] border border-[#313244] text-white text-xs rounded block w-full p-2 outline-none" placeholder="Nom affichage...">
+                                            </div>
+                                            <div class="w-24">
+                                                <input type="text" id="ing2-id" class="bg-[#181825] border border-[#313244] text-blue-300 text-xs rounded block w-full p-2 outline-none font-mono" placeholder="FormID">
+                                            </div>
+                                            <div class="w-16">
+                                                <input type="number" id="ing2-qty" min="1" class="bg-[#181825] border border-[#313244] text-white text-xs rounded block w-full p-2 outline-none" placeholder="Qté">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Ing 3 -->
+                                    <div class="bg-[#11111a] p-3 rounded-lg border border-[#313244]">
+                                        <div class="text-xs text-gray-500 mb-2 font-bold uppercase tracking-wide">Ingrédient 3 (Facultatif)</div>
+                                        <div class="flex space-x-2">
+                                            <div class="flex-1 relative">
+                                                <input type="text" id="ing3-name" class="autocomplete-input bg-[#181825] border border-[#313244] text-white text-xs rounded block w-full p-2 outline-none" placeholder="Nom affichage...">
+                                            </div>
+                                            <div class="w-24">
+                                                <input type="text" id="ing3-id" class="bg-[#181825] border border-[#313244] text-blue-300 text-xs rounded block w-full p-2 outline-none font-mono" placeholder="FormID">
+                                            </div>
+                                            <div class="w-16">
+                                                <input type="number" id="ing3-qty" min="1" class="bg-[#181825] border border-[#313244] text-white text-xs rounded block w-full p-2 outline-none" placeholder="Qté">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- RESULTS -->
+                            <div>
+                                <h3 class="text-lg font-medium text-white mb-4 border-b border-[#313244] pb-2">Résultats Obtenus</h3>
+                                <div class="space-y-4">
+                                    <!-- Med -->
+                                    <div class="bg-[#11111a] p-3 rounded-lg border border-[#313244]">
+                                        <div class="text-xs text-gray-500 mb-2 font-bold uppercase tracking-wide flex items-center"><span class="w-2 h-2 rounded-full bg-gray-500 mr-2"></span> Résultat Médiocre</div>
+                                        <div class="flex space-x-2">
+                                            <div class="flex-1 relative">
+                                                <input type="text" id="res-med-name" class="autocomplete-input bg-[#181825] border border-[#313244] text-white text-xs rounded block w-full p-2 outline-none" placeholder="Nom affichage...">
+                                            </div>
+                                            <div class="w-24">
+                                                <input type="text" id="res-med-id" class="bg-[#181825] border border-[#313244] text-blue-300 text-xs rounded block w-full p-2 outline-none font-mono" placeholder="FormID">
+                                            </div>
+                                            <div class="w-16">
+                                                <input type="number" id="res-med-qty" min="1" class="bg-[#181825] border border-[#313244] text-white text-xs rounded block w-full p-2 outline-none" placeholder="Qté">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Norm -->
+                                    <div class="bg-[#11111a] p-3 rounded-lg border border-[#313244]">
+                                        <div class="text-xs text-gray-500 mb-2 font-bold uppercase tracking-wide flex items-center"><span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span> Résultat Normal</div>
+                                        <div class="flex space-x-2">
+                                            <div class="flex-1 relative">
+                                                <input type="text" id="res-norm-name" class="autocomplete-input bg-[#181825] border border-[#313244] text-white text-xs rounded block w-full p-2 outline-none" placeholder="Nom affichage...">
+                                            </div>
+                                            <div class="w-24">
+                                                <input type="text" id="res-norm-id" class="bg-[#181825] border border-[#313244] text-blue-300 text-xs rounded block w-full p-2 outline-none font-mono" placeholder="FormID">
+                                            </div>
+                                            <div class="w-16">
+                                                <input type="number" id="res-norm-qty" min="1" class="bg-[#181825] border border-[#313244] text-white text-xs rounded block w-full p-2 outline-none" placeholder="Qté">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Sup -->
+                                    <div class="bg-[#11111a] p-3 rounded-lg border border-[#313244]">
+                                        <div class="text-xs text-gray-500 mb-2 font-bold uppercase tracking-wide flex items-center"><span class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></span> Résultat Supérieur</div>
+                                        <div class="flex space-x-2">
+                                            <div class="flex-1 relative">
+                                                <input type="text" id="res-sup-name" class="autocomplete-input bg-[#181825] border border-[#313244] text-white text-xs rounded block w-full p-2 outline-none" placeholder="Nom affichage...">
+                                            </div>
+                                            <div class="w-24">
+                                                <input type="text" id="res-sup-id" class="bg-[#181825] border border-[#313244] text-blue-300 text-xs rounded block w-full p-2 outline-none font-mono" placeholder="FormID">
+                                            </div>
+                                            <div class="w-16">
+                                                <input type="number" id="res-sup-qty" min="1" class="bg-[#181825] border border-[#313244] text-white text-xs rounded block w-full p-2 outline-none" placeholder="Qté">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div id="ingredients-container" class="space-y-3 mb-8">
-                            <!-- Rows injected by JS -->
-                        </div>
-                        
-                        <div class="flex justify-end space-x-3">
+                        <div class="flex justify-end space-x-3 mt-8 border-t border-[#313244] pt-4">
                             <button type="button" class="bg-transparent border border-gray-600 text-gray-300 hover:bg-gray-800 text-sm font-medium rounded-lg px-5 py-2.5 transition-colors" onclick="showTab('tab-recipes')">
                                 Annuler
                             </button>
@@ -169,13 +292,10 @@
                 
                 <div class="bg-[#181825] border border-[#313244] rounded-lg p-6 shadow-lg">
                     <form id="category-form" class="flex gap-4 mb-6">
-                        <input type="text" id="new-category-name" required class="bg-[#11111a] border border-[#313244] text-white text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block flex-1 p-2.5 outline-none" placeholder="Nouvelle catégorie (ex: Armures Lourdes)...">
+                        <input type="text" id="new-category-name" required class="bg-[#11111a] border border-[#313244] text-white text-sm rounded-lg focus:ring-red-500 block flex-1 p-2.5 outline-none" placeholder="Nouvelle catégorie (ex: Armures Lourdes)...">
                         <button type="submit" class="bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg px-5 py-2.5 transition-colors">Ajouter</button>
                     </form>
-                    
-                    <ul id="category-list" class="space-y-2">
-                        <!-- Injected by JS -->
-                    </ul>
+                    <ul id="category-list" class="space-y-2"></ul>
                 </div>
             </div>
 
@@ -188,7 +308,7 @@
                     </div>
                     <div class="relative">
                         <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
-                        <input type="text" id="db-search" placeholder="Nom ou FormID..." class="bg-[#181825] border border-[#313244] text-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 block w-80 pl-10 p-2.5 outline-none shadow-inner">
+                        <input type="text" id="db-search" placeholder="Nom ou FormID..." class="bg-[#181825] border border-[#313244] text-gray-300 rounded-lg focus:ring-green-500 block w-80 pl-10 p-2.5 outline-none shadow-inner">
                     </div>
                 </div>
                 
@@ -202,8 +322,10 @@
                     </div>
                     
                     <div class="overflow-auto p-4 flex-1">
+                        <!-- Result summary -->
+                        <div id="db-summary" class="text-xs font-bold text-gray-400 mb-3 ml-1 hidden"></div>
                         <div id="db-results" class="space-y-2">
-                            <div class="text-center text-gray-500 mt-10">Veuillez importer un fichier JSON (généré via xEdit) pour parcourir la base de données.</div>
+                            <div class="text-center text-gray-500 mt-10">Veuillez importer un fichier JSON (généré via xEdit).</div>
                         </div>
                     </div>
                 </div>

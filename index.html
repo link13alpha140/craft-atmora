@@ -83,12 +83,9 @@
         <header class="h-16 bg-[#181825] border-b border-[#313244] flex items-center px-6 shrink-0 z-10 shadow-sm">
             <div class="ml-auto flex items-center space-x-4">
                 <button onclick="localStorage.removeItem('atmora_recipes'); location.reload();" class="text-xs text-gray-600 hover:text-red-500 mr-4">Wipe Cache</button>
-                <button onclick="exportData()" class="text-sm bg-blue-900/50 hover:bg-blue-800 text-blue-300 px-3 py-1.5 rounded transition-colors border border-blue-800 flex items-center">
-                    <i class="fa-solid fa-download mr-2"></i> Exporter
-                </button>
-                <div class="flex items-center bg-[#313244] rounded-full pl-1 pr-3 py-1 cursor-pointer hover:bg-gray-700 transition-colors">
-                    <div class="w-6 h-6 rounded-full bg-red-800 text-white flex items-center justify-center text-xs font-bold mr-2">S</div>
-                    <span class="text-sm font-medium text-white">Staff</span>
+                <div id="discord-login-btn" onclick="loginDiscord()" class="flex items-center bg-[#5865F2]/20 border border-[#5865F2]/50 rounded-full pl-3 pr-4 py-1.5 cursor-pointer hover:bg-[#5865F2]/40 transition-colors">
+                    <i class="fa-brands fa-discord text-[#5865F2] mr-2 text-lg"></i>
+                    <span class="text-sm font-medium text-[#5865F2] hover:text-white transition-colors">Connexion Discord</span>
                 </div>
             </div>
         </header>

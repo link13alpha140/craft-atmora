@@ -229,6 +229,7 @@ function renderRecipes() {
             <td class="px-6 py-4 font-medium text-white">
                 <div class="text-base">${escapeHtml(recipe.name)}</div>
                 <div class="text-[10px] text-gray-600">ID: ${recipe.id}</div>
+                <div class="text-[10px] text-blue-400 mt-1"><i class="fa-brands fa-discord mr-1"></i>${escapeHtml(recipe.author || 'Anonyme')}</div>
             </td>
             <td class="px-6 py-4">
                 <span class="bg-gray-800 text-gray-300 border border-gray-600 text-xs font-medium px-2.5 py-1 rounded">${escapeHtml(recipe.category)}</span>
@@ -246,6 +247,10 @@ function renderRecipes() {
         `;
         recipeTableBody.appendChild(tr);
     });
+}
+
+function loginDiscord() {
+    alert("C'est ici qu'intervient ton ami avec son serveur !\n\nPour l'instant, le site est sur GitHub Pages (sans base de données serveur). Pour que la connexion Discord fonctionne et sécurise l'ajout des recettes, il faudra que ton ami héberge ce site avec un backend (comme Node.js ou Firebase).");
 }
 
 function deleteRecipe(id) {

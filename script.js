@@ -286,13 +286,17 @@ function renderDbResults() {
             const name = item.name || item.Name || item.FULL || "Inconnu";
             const formid = item.formId || item.FormID || item.id || "N/A";
             const plugin = item.plugin || item.File || "N/A";
+            const editorId = item.editorId || item.EditorID || "";
             
             div.innerHTML = `
                 <div class="flex justify-between mb-1">
                     <strong class="text-white text-sm">${escapeHtml(name)}</strong>
                     <span class="text-blue-400">${escapeHtml(formid)}</span>
                 </div>
-                <div class="text-gray-500">Fichier: <span class="text-green-400">${escapeHtml(plugin)}</span></div>
+                <div class="text-gray-500 flex justify-between">
+                    <span>Fichier: <span class="text-green-400">${escapeHtml(plugin)}</span></span>
+                    <span class="text-gray-600 text-xs">${escapeHtml(editorId)}</span>
+                </div>
             `;
             dbResults.appendChild(div);
             count++;

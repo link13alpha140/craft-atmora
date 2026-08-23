@@ -22,17 +22,16 @@ function showTab(tabId) {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('bg-[#313244]', 'text-white');
         item.classList.add('text-gray-300');
+        if (item.getAttribute('onclick').includes(tabId)) {
+            item.classList.remove('text-gray-300');
+            item.classList.add('bg-[#313244]', 'text-white');
+        }
     });
 
     const selectedTab = document.getElementById(tabId);
     if (selectedTab) {
         selectedTab.classList.remove('hidden');
         selectedTab.classList.add('block');
-    }
-
-    if (event && event.currentTarget) {
-        event.currentTarget.classList.remove('text-gray-300');
-        event.currentTarget.classList.add('bg-[#313244]', 'text-white');
     }
 
     if (tabId === 'tab-create-recipe') {

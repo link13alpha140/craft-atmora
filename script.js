@@ -253,7 +253,8 @@ jsonUpload.addEventListener('change', (e) => {
             console.error(err);
         }
     };
-    reader.readAsText(file);
+    // xEdit exporte par défaut en ANSI (Windows-1252), ce qui casse les accents si on lit en UTF-8
+    reader.readAsText(file, 'windows-1252');
 });
 
 dbSearch.addEventListener('input', renderDbResults);
@@ -269,7 +270,7 @@ function renderDbResults() {
         return;
     }
 
-    const maxResults = 50;
+    const maxResults = 300; // Augmenté de 50 à 300 pour plus de confort
     let count = 0;
     
     for(let i = 0; i < dbItems.length; i++) {

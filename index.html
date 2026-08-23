@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atmora Craft - Panel</title>
+    <!-- Tailwind CSS for rapid styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#11111a] text-gray-300 font-sans h-screen flex overflow-hidden selection:bg-red-900 selection:text-white">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-[#181825] border-r border-[#313244] flex flex-col h-full shadow-xl z-20 shrink-0">
+        <!-- Logo Area -->
+        <div class="h-20 flex items-center px-6 border-b border-[#313244]">
+            <div class="w-10 h-10 bg-[#313244] rounded flex items-center justify-center mr-4 text-red-500 border border-red-900 shadow-[0_0_10px_rgba(220,38,38,0.2)]">
+                <i class="fa-solid fa-shield-halved text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-white font-bold text-lg tracking-wider">Atmora</h1>
+                <span class="text-xs text-gray-500 font-semibold tracking-widest uppercase">Panel Craft</span>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <div class="flex-1 overflow-y-auto py-6 px-4 space-y-8">
+            <!-- Section Crafting -->
+            <div>
+                <h2 class="text-xs text-gray-500 font-bold mb-4 uppercase tracking-widest px-2">Artisanat</h2>
+                <nav class="space-y-1">
+                    <a href="#" onclick="showTab('tab-recipes')" class="nav-item active flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-300 hover:text-white hover:bg-[#313244] transition-colors group">
+                        <i class="fa-solid fa-book w-6 text-center text-gray-500 group-hover:text-red-400 transition-colors"></i>
+                        <span>Navigateur de Recettes</span>
+                    </a>
+                    <a href="#" onclick="showTab('tab-create-recipe')" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-300 hover:text-white hover:bg-[#313244] transition-colors group">
+                        <i class="fa-solid fa-hammer w-6 text-center text-gray-500 group-hover:text-red-400 transition-colors"></i>
+                        <span>Créer une Recette</span>
+                    </a>
+                    <a href="#" onclick="showTab('tab-categories')" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-300 hover:text-white hover:bg-[#313244] transition-colors group">
+                        <i class="fa-solid fa-tags w-6 text-center text-gray-500 group-hover:text-red-400 transition-colors"></i>
+                        <span>Gérer les Catégories</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Section Base de Données -->
+            <div>
+                <h2 class="text-xs text-gray-500 font-bold mb-4 uppercase tracking-widest px-2">Base de Données</h2>
+                <nav class="space-y-1">
+                    <a href="#" onclick="showTab('tab-items')" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-300 hover:text-white hover:bg-[#313244] transition-colors group">
+                        <i class="fa-solid fa-database w-6 text-center text-gray-500 group-hover:text-green-500 transition-colors"></i>
+                        <span class="flex-1">Items du Jeu (JSON)</span>
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Footer Sidebar -->
+        <div class="p-4 border-t border-[#313244] text-center text-xs text-gray-600">
+            Atmora Roleplay v1.0<br>
+            Console d'administration
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full bg-[#1e1e2e] overflow-hidden relative">
+        
+        <!-- Top Navbar -->
+        <header class="h-16 bg-[#181825] border-b border-[#313244] flex items-center px-6 shrink-0 z-10 shadow-sm">
+            <!-- Server Status info as seen in screenshot -->
+            <div class="flex items-center space-x-6 text-sm">
+                <div class="flex items-center text-gray-400">
+                    <i class="fa-solid fa-microchip mr-2"></i>
+                    <span>Serveur <span class="text-green-400">En Ligne</span></span>
+                </div>
+                <div class="h-4 border-l border-gray-600"></div>
+                <div class="flex items-center text-gray-400">
+                    <i class="fa-solid fa-database mr-2"></i>
+                    <span>JSON <span class="text-yellow-400">En attente</span></span>
+                </div>
+            </div>
+            
+            <div class="ml-auto flex items-center space-x-4">
+                <button class="w-8 h-8 rounded bg-[#313244] text-gray-400 hover:text-white flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+                <div class="flex items-center bg-[#313244] rounded-full pl-1 pr-3 py-1 cursor-pointer hover:bg-gray-700 transition-colors">
+                    <div class="w-6 h-6 rounded-full bg-red-800 text-white flex items-center justify-center text-xs font-bold mr-2">L</div>
+                    <span class="text-sm font-medium text-white">Staff</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tabs Content Area -->
+        <div class="flex-1 overflow-auto p-8" id="main-content">
+            
+            <!-- 1. Navigateur de recettes -->
+            <div id="tab-recipes" class="tab-content block">
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-1">Navigateur de Recettes</h2>
+                        <p class="text-gray-400 text-sm">Consultez et modifiez les recettes existantes.</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <div class="relative">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm"></i>
+                            <input type="text" placeholder="Chercher une recette..." class="bg-[#181825] border border-[#313244] text-gray-300 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-64 pl-10 p-2.5 outline-none transition-colors">
+                        </div>
+                        <button class="bg-red-700 hover:bg-red-800 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition-colors" onclick="showTab('tab-create-recipe')">
+                            Nouvelle Recette
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Table container -->
+                <div class="bg-[#181825] border border-[#313244] rounded-lg overflow-hidden shadow-lg">
+                    <table class="w-full text-sm text-left text-gray-400">
+                        <thead class="text-xs text-gray-400 uppercase bg-[#313244]/50 border-b border-[#313244]">
+                            <tr>
+                                <th scope="col" class="px-6 py-4 font-semibold tracking-wider">Objet</th>
+                                <th scope="col" class="px-6 py-4 font-semibold tracking-wider">Catégorie</th>
+                                <th scope="col" class="px-6 py-4 font-semibold tracking-wider">Ingrédients</th>
+                                <th scope="col" class="px-6 py-4 font-semibold tracking-wider text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Demo Row -->
+                            <tr class="border-b border-[#313244] hover:bg-[#313244]/30 transition-colors">
+                                <td class="px-6 py-4 font-medium text-white flex items-center">
+                                    <div class="w-8 h-8 rounded bg-gray-800 flex items-center justify-center mr-3 border border-gray-700 text-gray-400"><i class="fa-solid fa-khanda"></i></div>
+                                    Épée de Fer
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="bg-gray-800 text-gray-300 border border-gray-600 text-xs font-medium px-2.5 py-1 rounded">Arme 1H</span>
+                                </td>
+                                <td class="px-6 py-4 text-gray-400">
+                                    2x Lingot de fer, 1x Bande de cuir
+                                </td>
+                                <td class="px-6 py-4 text-right space-x-2">
+                                    <button class="text-blue-400 hover:text-blue-300 p-1"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="text-red-500 hover:text-red-400 p-1"><i class="fa-solid fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-[#313244] hover:bg-[#313244]/30 transition-colors">
+                                <td class="px-6 py-4 font-medium text-white flex items-center">
+                                    <div class="w-8 h-8 rounded bg-gray-800 flex items-center justify-center mr-3 border border-gray-700 text-gray-400"><i class="fa-solid fa-flask"></i></div>
+                                    Potion de Soin
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="bg-gray-800 text-gray-300 border border-gray-600 text-xs font-medium px-2.5 py-1 rounded">Alchimie</span>
+                                </td>
+                                <td class="px-6 py-4 text-gray-400">
+                                    1x Blé, 1x Cloaque
+                                </td>
+                                <td class="px-6 py-4 text-right space-x-2">
+                                    <button class="text-blue-400 hover:text-blue-300 p-1"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="text-red-500 hover:text-red-400 p-1"><i class="fa-solid fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="p-4 text-center text-sm text-gray-500 italic">
+                        Ceci est une interface de démonstration.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Créer une recette -->
+            <div id="tab-create-recipe" class="tab-content hidden max-w-4xl">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-white mb-1">Créer une Recette</h2>
+                    <p class="text-gray-400 text-sm">Définissez un nouvel objet craftable et ses composants.</p>
+                </div>
+                
+                <div class="bg-[#181825] border border-[#313244] rounded-lg p-6 shadow-lg">
+                    <form>
+                        <div class="grid grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-300">Nom de l'objet final (ID ou Nom)</label>
+                                <input type="text" class="bg-[#11111a] border border-[#313244] text-white text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 outline-none" placeholder="Ex: Iron Sword">
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-300">Catégorie</label>
+                                <select class="bg-[#11111a] border border-[#313244] text-white text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 outline-none">
+                                    <option>Arme 1H</option>
+                                    <option>Armure Lourde</option>
+                                    <option>Alchimie</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <hr class="border-[#313244] my-6">
+                        
+                        <div class="mb-4 flex justify-between items-center">
+                            <h3 class="text-lg font-medium text-white">Ingrédients requis</h3>
+                            <button type="button" class="text-xs bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded border border-gray-600 transition-colors">
+                                <i class="fa-solid fa-plus mr-1"></i> Ajouter un ingrédient
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-3 mb-8">
+                            <div class="flex space-x-4 items-center bg-[#11111a] p-3 rounded-lg border border-[#313244]">
+                                <div class="flex-1">
+                                    <label class="block mb-1 text-xs text-gray-500">Objet (ID JSON)</label>
+                                    <input type="text" class="bg-[#181825] border border-[#313244] text-white text-sm rounded block w-full p-2 outline-none" placeholder="Chercher dans le JSON...">
+                                </div>
+                                <div class="w-24">
+                                    <label class="block mb-1 text-xs text-gray-500">Quantité</label>
+                                    <input type="number" value="1" min="1" class="bg-[#181825] border border-[#313244] text-white text-sm rounded block w-full p-2 outline-none">
+                                </div>
+                                <div class="pt-5">
+                                    <button type="button" class="text-red-500 hover:text-red-400 p-2"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                            <!-- Fake second ingredient -->
+                            <div class="flex space-x-4 items-center bg-[#11111a] p-3 rounded-lg border border-[#313244]">
+                                <div class="flex-1">
+                                    <label class="block mb-1 text-xs text-gray-500">Objet (ID JSON)</label>
+                                    <input type="text" class="bg-[#181825] border border-[#313244] text-white text-sm rounded block w-full p-2 outline-none" placeholder="Chercher dans le JSON...">
+                                </div>
+                                <div class="w-24">
+                                    <label class="block mb-1 text-xs text-gray-500">Quantité</label>
+                                    <input type="number" value="1" min="1" class="bg-[#181825] border border-[#313244] text-white text-sm rounded block w-full p-2 outline-none">
+                                </div>
+                                <div class="pt-5">
+                                    <button type="button" class="text-red-500 hover:text-red-400 p-2"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" class="bg-transparent border border-gray-600 text-gray-300 hover:bg-gray-800 text-sm font-medium rounded-lg px-5 py-2.5 transition-colors" onclick="showTab('tab-recipes')">
+                                Annuler
+                            </button>
+                            <button type="button" class="bg-red-700 hover:bg-red-800 text-white text-sm font-medium rounded-lg px-5 py-2.5 transition-colors">
+                                Sauvegarder la recette
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 3. Catégories -->
+            <div id="tab-categories" class="tab-content hidden max-w-3xl">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-white mb-1">Catégories d'Artisanat</h2>
+                    <p class="text-gray-400 text-sm">Gérez les sections de votre livre de craft.</p>
+                </div>
+                
+                <div class="bg-[#181825] border border-[#313244] rounded-lg p-6 shadow-lg">
+                    <div class="flex gap-4 mb-6">
+                        <input type="text" class="bg-[#11111a] border border-[#313244] text-white text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block flex-1 p-2.5 outline-none" placeholder="Nouvelle catégorie (ex: Armures Lourdes)...">
+                        <button class="bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg px-5 py-2.5 transition-colors">Ajouter</button>
+                    </div>
+                    
+                    <ul class="space-y-2">
+                        <li class="bg-[#11111a] border border-[#313244] p-3 rounded-lg flex justify-between items-center">
+                            <span class="text-white font-medium">Armes à 1 Main</span>
+                            <button class="text-red-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
+                        </li>
+                        <li class="bg-[#11111a] border border-[#313244] p-3 rounded-lg flex justify-between items-center">
+                            <span class="text-white font-medium">Armes à 2 Mains</span>
+                            <button class="text-red-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
+                        </li>
+                        <li class="bg-[#11111a] border border-[#313244] p-3 rounded-lg flex justify-between items-center">
+                            <span class="text-white font-medium">Alchimie</span>
+                            <button class="text-red-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 4. JSON Items Browser -->
+            <div id="tab-items" class="tab-content hidden h-full flex flex-col">
+                <div class="flex justify-between items-end mb-6 shrink-0">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-1">Base de Données des Objets</h2>
+                        <p class="text-gray-400 text-sm">Recherche directe dans l'export xEdit (SSEEdit).</p>
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                        <input type="text" id="json-search" placeholder="Nom ou FormID..." class="bg-[#181825] border border-[#313244] text-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 block w-80 pl-10 p-2.5 outline-none shadow-inner">
+                    </div>
+                </div>
+                
+                <div class="bg-[#181825] border border-[#313244] rounded-lg overflow-hidden flex-1 shadow-lg flex flex-col">
+                    <div class="p-4 bg-[#313244]/30 border-b border-[#313244] flex items-center justify-between">
+                        <span class="text-sm font-medium text-gray-300"><i class="fa-solid fa-file-code mr-2 text-green-500"></i>items_export.json (Simulation)</span>
+                        <button class="text-xs text-blue-400 hover:text-blue-300 bg-blue-900/20 px-2 py-1 rounded border border-blue-800"><i class="fa-solid fa-upload mr-1"></i> Mettre à jour le JSON</button>
+                    </div>
+                    
+                    <div class="overflow-auto p-4 flex-1">
+                        <!-- Code mock view -->
+                        <div class="font-mono text-sm bg-[#11111a] p-4 rounded border border-gray-800 text-gray-400">
+                            <span class="text-yellow-300">[</span><br>
+                            &nbsp;&nbsp;<span class="text-yellow-300">{</span><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-300">"name"</span>: <span class="text-green-400">"Iron Sword"</span>,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-300">"formId"</span>: <span class="text-green-400">"00012EB7"</span>,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-300">"plugin"</span>: <span class="text-green-400">"Skyrim.esm"</span>,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-300">"type"</span>: <span class="text-green-400">"WEAP"</span><br>
+                            &nbsp;&nbsp;<span class="text-yellow-300">}</span>,<br>
+                            &nbsp;&nbsp;<span class="text-yellow-300">{</span><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-300">"name"</span>: <span class="text-green-400">"Iron Ingot"</span>,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-300">"formId"</span>: <span class="text-green-400">"0005ACE4"</span>,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-300">"plugin"</span>: <span class="text-green-400">"Skyrim.esm"</span>,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-300">"type"</span>: <span class="text-green-400">"INGR"</span><br>
+                            &nbsp;&nbsp;<span class="text-yellow-300">}</span><br>
+                            <span class="text-yellow-300">]</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

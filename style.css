@@ -1,0 +1,21 @@
+/* Custom Scrollbar for dark theme */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #11111a; 
+}
+::-webkit-scrollbar-thumb {
+    background: #313244; 
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #45475a; 
+}
+
+/* Nav item active styles */
+.nav-item.active {
+    background-color: #313244;
+    color: white;
+}
